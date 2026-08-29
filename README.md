@@ -1,13 +1,12 @@
 <table>
 <tr>
-<td valign="top" width="30%">
-
-<!-- Place 2 or 3 images here -->
+<td valign="top" width="40%">
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img1.jpg" />
 <br/><br/>
-<img src="YOUR_IMAGE_2" width="100%" />
+<img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img2.jpg" />
 <br/><br/>
-<img src="YOUR_IMAGE_3" width="100%" />
+<img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img3.jpg" />
+
 
 </td>
 <td valign="top">

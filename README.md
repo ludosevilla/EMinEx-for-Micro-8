@@ -29,7 +29,7 @@ EMinEx for Micro-8 already allows you to display pages in the Videotex format.
 
 The Videotex format can display **25 lines of 40 characters, in 8 colors**!
 
-EMinEx reproduces this display using the **EF9345 character fonts**, which were used at the time in Minitel terminals, as well as in several home computers such as the **Matra Alice 32, Matra Alice 90 and Philips VG-5000**.
+EMinEx reproduces this display using the **EF9345 chip character fonts**, which were used at the time in Minitel terminals, as well as in several home computers such as the **Matra Alice 32, Matra Alice 90 and Philips VG-5000**.
 
 A few dozen pages are included with the software.
 

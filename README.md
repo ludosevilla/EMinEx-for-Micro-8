@@ -3,7 +3,7 @@
 <td valign="top" width="30%">
 
 <!-- Place 2 or 3 images here -->
-<img src="YOUR_IMAGE_1" width="100%" />
+<img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img1.jpg" width="20%" />
 <br/><br/>
 <img src="YOUR_IMAGE_2" width="100%" />
 <br/><br/>

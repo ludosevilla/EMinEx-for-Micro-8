@@ -6,8 +6,8 @@
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img2.jpg" />
 <br/><br/>
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img3.jpg" />
-
-
+<br/><br/>
+<a href="https://youtu.be/ip8QcskAdjs" target="_blank">See video</a>
 </td>
 <td valign="top">
 

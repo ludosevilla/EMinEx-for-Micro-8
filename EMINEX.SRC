@@ -116,10 +116,8 @@ void _boxRmPath() {
 
 // To call at start
 void boxInit() {
-	// Get the current path
-	// Address 0x0608 may change in future version
-	// of the O.S. (correct with 0.7.9)
-	memCpy(0x0608,&_boxDir,80);
+	poke(&_boxDir,0);
+	concat(_boxDir,_fCD);
 }
 
 

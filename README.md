@@ -7,7 +7,8 @@
 <br/><br/>
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img3.jpg" />
 <br/><br/>
-<a href="https://youtu.be/ip8QcskAdjs" target="_blank">See video</a>
+<a href="https://youtu.be/ip8QcskAdjs" target="_blank">See video 1</a>
+<br/><a href="https://youtu.be/1XL_i8SYG1U" target="_blank">See video 2</a>
 </td>
 <td valign="top">
 
@@ -72,7 +73,9 @@ The code is commented (I've done my best!), and you can see this library in acti
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img2.jpg" />
 <br/><br/>
 <img src="https://raw.githubusercontent.com/ludosevilla/EMinEx-for-Micro-8/refs/heads/main/IMG/img3.jpg" />
-
+<br/><br/>
+<a href="https://youtu.be/ip8QcskAdjs" target="_blank">See video 1</a>
+<br/><a href="https://youtu.be/1XL_i8SYG1U" target="_blank">See video 2</a>
 
 </td>
 <td valign="top">

@@ -33,6 +33,21 @@ EMinEx reproduces this display using the **EF9345 chip character fonts**, which 
 
 A few dozen pages are included with the software.
 
+If your Micro-8 can connect to the Internet and access the MiniPavi Minitel gateway, the following table shows the mapping between the Micro-8 keys and the Minitel function keys.
+
+| **MICRO-8** | **Minitel** |
+|---------|------------|
+| **Enter** | Envoi (Send) |
+| **Down arrow** | Suite (Next) |
+| **Up arrow** | Retour (Previous)|
+| **Left arrow** | Sommaire (Index) |
+| **Right arrow** | Guide |
+| **Backspace** | Correction (Del)|
+| **FCTN + Backspace** | Annulation (Cancel)|
+| **FCTN + R** | Répétition (Repeat) |
+| **FCTN + Left arrown** | Connexion/Fin (Connection/End)|
+
+
 Enjoy those **big pixels and beautiful 8-color graphics**!
 
 ### A small window library
@@ -83,6 +98,21 @@ Le format Vidéotex permet d’afficher **25 lignes de 40 caractères, en 8 coul
 EMinEx reproduit cet affichage en utilisant les **polices de caractères de l’EF9345**, utilisées à l’époque dans les terminaux Minitel, mais également dans certains micro-ordinateurs comme les **Matra Alice 32, Matra Alice 90 et Philips VG-5000**.
 
 Quelques dizaines de pages sont fournies avec le logiciel.
+
+Si votre Micro-8 peut se connecter à Internet et accéder à la passerelle Minitel MiniPavi, le tableau suivant présente la correspondance entre les touches du Micro-8 et les touches de fonction du Minitel.
+
+| **MICRO-8** | **Minitel** |
+|---------|------------|
+| **Enter** | Envoi (Send) |
+| **Down arrow** | Suite (Next) |
+| **Up arrow** | Retour (Previous)|
+| **Left arrow** | Sommaire (Index) |
+| **Right arrow** | Guide |
+| **Backspace** | Correction (Del)|
+| **FCTN + Backspace** | Annulation (Cancel)|
+| **FCTN + R** | Répétition (Repeat) |
+| **FCTN + Left arrown** | Connexion/Fin (Connection/End)|
+
 
 À vous les **gros pixels et les 8 belles couleurs** !
 

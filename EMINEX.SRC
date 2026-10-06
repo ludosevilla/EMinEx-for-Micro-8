@@ -1,11 +1,17 @@
 ///////////////////////////////
-// EMINEX
+// EMINEX V 1.0
 // Videotex CEPT-2 Emulator
-// OS ver 0.7.9 minimum
+// OS ver 0.8.1 minimum
 // Jean-arthur Silve 2026
 // License GNU GPL3
 // github.com/ludosevilla
 ///////////////////////////////
+
+
+void sleep(nat msec) {
+	clkSet();
+	while(_mSec<msec){}
+}
 
 
 //////////////////////
@@ -677,6 +683,337 @@ byte boxLoop(nat retAddr) {
 ///////////////////////////////
 
 
+///////////////////////////////
+// CIRCULAR BUFFERS FUNCTIONS
+///////////////////////////////
+
+
+void bufInit(nat addr,byte page,nat size,byte overLap) {
+	nat fifoSize;
+	
+	memSet(addr,size,0,page);
+	fifoSize=size-9; // Available will be size-9 bytes !!
+	// writePos
+	poke(addr+0,0,page);
+	poke(addr+1,0,page);
+	// readPos
+	poke(addr+2,0,page);
+	poke(addr+3,0,page);
+	// count
+	poke(addr+4,0,page);
+	poke(addr+5,0,page);
+	// size of fifo
+	pokeW(addr+6,fifoSize,page);
+	// overLap
+	poke(addr+8,overLap,page);
+}
+
+void bufClear(nat addr,byte page) {	
+	// writePos
+	poke(addr+0,0,page);
+	poke(addr+1,0,page);
+	// readPos
+	poke(addr+2,0,page);
+	poke(addr+3,0,page);
+	// count
+	poke(addr+4,0,page);
+	poke(addr+5,0,page);
+}
+
+
+nat bufGetCount(nat addr,byte page) {
+	return peekW(addr+4,page);
+}
+	
+bool bufPut(nat addr,byte page,byte value) {
+	nat writePos;
+	nat readPos;
+	nat count;
+	nat fifoSize;
+	byte overLap;
+
+
+	writePos=peekW(addr,page);
+	readPos=peekW(addr+2,page);
+	count=peekW(addr+4,page);
+	fifoSize=peekW(addr+6,page);
+
+	overLap=peek(addr+8,page);
+
+	if (count>=fifoSize && overLap==0) {
+		// Buffer is full
+		return false;
+	}
+
+	poke(addr+9+writePos,value,page);
+
+	writePos++;
+
+	if (writePos>=fifoSize)
+		writePos=0;
+
+	if (count>=fifoSize) {
+		// Buffer is full: discard oldest byte
+		readPos++;
+
+		if (readPos>=fifoSize)
+			readPos=0;
+	} else {
+		count++;
+	}
+
+	pokeW(addr,writePos,page);
+	pokeW(addr+2,readPos,page);
+	pokeW(addr+4,count,page);
+	return true;
+}
+
+int bufGet(nat addr,byte page) {
+	nat readPos;
+	nat count;
+	nat fifoSize;
+	byte value;
+
+	readPos=peekW(addr+2,page);
+	count=peekW(addr+4,page);
+	fifoSize=peekW(addr+6,page);
+
+	if (count==0)
+		return -1;
+
+	value=peek(addr+9+readPos,page);
+	readPos++;
+
+	if (readPos>=fifoSize)
+		readPos=0;
+
+	count--;
+
+	pokeW(addr+2,readPos,page);
+	pokeW(addr+4,count,page);
+	return value;
+}
+
+bool bufStrStr(nat addr,byte page,nat searchAddr,byte length) {
+	nat readPos;
+	nat count;
+	nat fifoSize;
+	nat i;
+	nat j;
+	nat k;
+	nat pos;
+	byte found;
+
+	readPos=peekW(addr+2,page);
+	count=peekW(addr+4,page);
+	fifoSize=peekW(addr+6,page);
+
+	if (length==0)
+		return true;
+	if (length>count)
+		return false;
+	k=count-length;
+	for (i=0;i<=k;i++) {
+ 		found=1;
+		for (j=0;j<length;j++) {
+			pos=readPos+i+j;
+			if (pos>=fifoSize)
+				pos=pos-fifoSize;
+			if (peek(addr+9+pos,page)!=peek(searchAddr+j)) {
+				found=0;
+				break;
+			}
+		}
+		if (found)
+			return true;
+	}
+	return false;
+}
+
+///////////////////////////////
+// END OF CIRCULAR BUFFERS
+///////////////////////////////
+
+///////////////////////////////
+// SERIAL FUNCTIONS	
+///////////////////////////////
+byte _serXON;
+byte _serXOFF;
+bool _serFC=false;
+bool _serFCstop=false;
+nat _serBufSize;
+nat _serBufSizeStop;
+nat _serBufSizeStart;
+
+// Create the buffer
+void serialInit(nat bufAddr,byte bufPage,nat bufSize,nat stop,nat resume) {
+	_serBufSize=bufSize;
+
+	_serBufSizeStop=stop;
+	_serBufSizeStart=resume;
+
+	bufInit(bufAddr,bufPage,bufSize,0);
+}
+
+// Check if data available and place it in the circular buffer
+// Shoud be called the more often possible as there is no
+// interrupt trigger available!
+void serialRx(nat bufAddr,byte bufPage) {
+byte r=0;
+
+	clkSet();
+	while(true) {
+		if (midiUpdt(true)) {
+			bool b;
+			r=1;
+			b=bufPut(bufAddr,bufPage,peek(0xffd0));
+			
+			if (_serFC && _serFCstop==false) {
+				nat count;
+				count = bufGetCount(bufAddr,bufPage);
+
+				if (count>=_serBufSizeStop) {
+					// XOFF
+					midiSend(_serXOFF);
+					_serFCstop=true;
+				}
+			}
+			
+			if (!b) {
+				return;
+			} // Buffer is full
+			clkSet();
+		} else {
+			if (r==0 || _mSec>225)
+				return;
+		}
+	}
+}
+
+// Get data from buffer
+int serialGet(nat bufAddr,byte bufPage) {
+	int i;
+	// will return -1 if no data
+	i=bufGet(bufAddr,bufPage);
+
+	if (i!=-1 && _serFCstop==true) {
+		nat count;
+		count = bufGetCount(bufAddr,bufPage);
+
+		if (count<=_serBufSizeStart) {
+			// XON
+			_serFCstop=false;
+			midiSend(_serXON);
+		}
+	}
+
+	return i;
+}
+
+// Send sstring on serial
+void serialStrPut(nat addr,nat bufAddr,byte bufPage) {
+	int i;
+	byte j;
+	while(true) {
+		j=peek((byte)(addr+i));
+		if (j==0) return;
+		midiSend(j);
+		i++;
+		serialRx(bufAddr,bufPage);
+		
+	}
+}
+
+
+void serialPut(nat autoRepAdr,byte autoRepL) {
+	for(byte i=0;i<autoRepL;i++) {
+		midiSend(peek(autoRepAdr+i));
+	}
+}
+
+void serialXonXoff(bool enabled,byte xon,byte xoff) {
+		_serXON=xon;
+		_serXOFF=xoff;
+		_serFC=enabled;
+}
+
+///////////////////////////////
+// END OF SERIAL FUNCTIONS
+///////////////////////////////
+
+
+///////////////////////////////
+// MODEM FUNCTIONS FOR ZIMODEM FIRMWARE
+///////////////////////////////
+
+text _mdmTx={10};
+text _mdmT={3};
+
+
+void modemReset(nat bufAddr,byte bufPage) {
+	bufClear(bufAddr,bufPage);
+	_mdmTx="+++";
+	serialStrPut(&_mdmTx,bufAddr,bufPage);
+	sleep(1200);
+	serialRx(bufAddr,bufPage);
+	_mdmTx="atzs44=1";
+	serialStrPut(&_mdmTx,bufAddr,bufPage);
+	sleep(2000);
+	serialRx(bufAddr,bufPage);
+}
+	
+bool modemDetect(nat bufAddr,byte bufPage) {
+	bool b;
+	modemReset(bufAddr,bufPage);
+	_mdmTx="OK";
+	b=bufStrStr(bufAddr,bufPage,&_mdmTx,3);
+	bufClear(bufAddr,bufPage);
+	return b;
+}
+
+void modemXonXoff(bool enabled,byte xon,byte xoff,nat bufAddr,byte bufPage) {
+	if (enabled) {
+		nat rank;
+		byte digit;
+		
+		_mdmTx="atf1s64=";
+		serialStrPut(&_mdmTx,bufAddr,bufPage);
+
+		rank=1;
+		for(int n=#_mdmT-1; n>=0; n--) {
+			digit = (byte)((xon%(10*rank))/rank);
+			poke(&_mdmT+(byte)n,digit+48);
+			rank*=10;
+		}
+		serialStrPut(&_mdmT,bufAddr,bufPage);
+
+		_mdmTx="s65=";
+		serialStrPut(&_mdmTx,bufAddr,bufPage);
+		
+		rank=1;
+		for(int n=#_mdmT-1; n>=0; n--) {
+			digit = (byte)((xoff%(10*rank))/rank);
+			poke(&_mdmT+(byte)n,digit+48);
+			rank*=10;
+		}
+		serialStrPut(&_mdmT,bufAddr,bufPage);
+		_mdmTx="";
+		serialStrPut(&_mdmTx,bufAddr,bufPage);
+	} else {
+		_mdmTx="at&k1";
+		serialStrPut(&_mdmTx,bufAddr,bufPage);
+	
+	}
+	
+	serialXonXoff(enabled,xon,xoff);
+}
+
+
+
+///////////////////////////////
+// END OF MODEM FUNCTIONS FOR ZIMODEM FIRMWARE
+///////////////////////////////
+
 
 ///////////////////////////////
 // EMINEX EMULATOR
@@ -701,7 +1038,7 @@ byte ii;
 byte jj;
 bool bb;
 nat nn;
-text t={80};
+text t={255};
 
 ///// APP VARS
 byte CWHITE=0;
@@ -757,6 +1094,8 @@ bool modeRouleau;
 byte lastChar;
 bool skipDel;
 byte ProBuffer[5];
+text autoRep={5};
+byte autoRepL=0;
 
 byte VDT_ESC=0x1B; 		// ESC
 byte VDT_LEFT=0x08; 		// Deplacement curseur vers la gauche
@@ -791,6 +1130,12 @@ byte numFiles;
 
 byte colorMode=1;
 
+bool modemPresent;
+byte bufPage=0x30;
+nat bufAddr=0x3000;
+
+
+
 /////////// MISC FUNCTIONS //////////////////
 
 
@@ -799,10 +1144,6 @@ void cls() {
 	memSet(0x1e80,3200,1); //clear screen colors
 }
 
-void sleep(nat msec) {
-	clkSet();
-	while(_mSec<msec){}
-}
 
 void pause(bool enable) {
 	if (enable==true || _keyDwn == 66) {
@@ -836,6 +1177,7 @@ void clearBitMap(){
 	memSet(cpuWindow,48000,0,bmpPageA);
 	memSet(cpuWindow,48000,0,bmpPageB);
 }
+
 
 
 byte _gKeys[81]={0,49,51,53,55,57,45,127,0,0,0,0,3,97,100,103,106,108,0,0,
@@ -1444,14 +1786,14 @@ void drawChar(byte lin,byte col,byte c,byte cFg,byte cBg,byte size,byte ul) {
 
 
 void render(byte lin,byte col, byte len) {
-nat of;
-nat llin;
-byte a1;
-byte a2;
-byte a3;
-byte cFg;
-byte cBg;
-byte tmp;
+	nat of;
+	nat llin;
+	byte a1;
+	byte a2;
+	byte a3;
+	byte cFg;
+	byte cBg;
+	byte tmp;
 
 	llin = 40*lin+col;
 	for(byte i=0;i<len;i++) {
@@ -1621,8 +1963,9 @@ byte sz;
 				poke(vMem2+of,a2,vMemPage);
 				a3 = attInvert<<6 + attBlink<<5 + delimiter<<4 + sz; 
 				poke(vMem3+of,a3,vMemPage);
-				//Extend bgcolor and underline untril next delimiter (not included) or EOL
+				//Extend bgcolor and underline until next delimiter (not included) or EOL
 				maxOf = n+39;
+				if (c>=160) ul=0; // If semi-graphics, don't extend underline
 				for (i=of+1;i<=maxOf;i++) {
 
 					a3 = peek(vMem3+i,vMemPage);
@@ -1851,7 +2194,10 @@ byte j;
 void seqPRO1(byte car) {
 	if (car == 0x7B) {
 		// Identification
-		// To do when connection will be possible
+		autoRep=" Mi8 ";
+		poke(&autoRep,1);
+		poke(&autoRep+4,4);		
+		autoRepL=5;
 	}
 	currSeq = TYPE_SEQ_NO;
 	return;
@@ -2209,6 +2555,7 @@ nat i;
 	curPos(8,39);
 	print("cDisplaying: ",filename," [",sz," bytes]          ");
 
+	videotexEnabled=true;
 
 	inChar(0x1b);
 	inChar(0x3a);
@@ -2261,9 +2608,31 @@ void displayDir(text dir) {
 	}	
 }
 
+void displayString(nat strAddr,byte length) {
+	byte c;
+	byte i;
+	while(true) {
+		c=peek(strAddr+i);
+		if (c==0 && length==0)
+			return;
+		inChar(c);
+		i++;
+		if (i==length && length>0)
+			return;
+	}
+}
 void localMode() {
 byte c;
+	curPos(8,39);
+	print("cLocal mode                                                ");
+	bufClear(bufAddr,bufPage);
+
+	videotexEnabled=true;
+	modeRouleau=false;
 	inChar(0x11);	
+
+	
+
 	while(true) {
 		c=getKey(true);
 		if (c<=127)
@@ -2273,6 +2642,147 @@ byte c;
 	}
 	inChar(0x14);	
 }
+
+///////
+// CONECTION & TERMINAL FUNCTIONS
+///////////////////////////////
+
+text _cnxTx={80};
+
+void cnxStart() {
+	int ch;
+	if (!modemPresent) return;
+	videotexEnabled=true;
+
+	inChar(0x0c);	
+	inChar(0x0c);	
+	inChar(0x0c);	
+
+	videotexEnabled=false;
+
+	curPos(8,39);
+	print("cConnecting...                                                ");
+
+	bufClear(bufAddr,bufPage);
+	modemXonXoff(true,254,255,bufAddr,bufPage);
+	
+	_cnxTx="atdx go.minipavi.fr:516";
+	serialStrPut(&_cnxTx,bufAddr,bufPage);
+
+	curPos(8,39);
+	print("cConnected                                                    ");
+
+	videotexEnabled=true;
+	modeRouleau=false;
+	inChar(0x0c);	
+	
+	while(true) {
+		ch = getKey(false);
+		if (ch>0 && ch!=139) {
+			poke(&_cnxTx,0);
+			if (ch==13) 
+				_cnxTx="A"; // RC=Envoi
+			else if (ch==10)
+				_cnxTx="H"; // Down=Suite
+			else if (ch==11)
+				_cnxTx="B"; // Up=Retour
+			else if (ch==127)
+				_cnxTx="G"; // Del=Correction
+			else if (ch==134)
+				_cnxTx="E"; // Fctn+del=Annulation
+			else if (ch==190)
+				_cnxTx="C"; // Fctn+R=Repetition
+			else if (ch==8)
+				_cnxTx="F"; // Left=Sommaire
+			else if (ch==9)
+				_cnxTx="D"; // Right=Guide
+			else if (ch==184)
+				_cnxTx="I"; // Fctn+Left=Cnx/fin
+
+			if (peek(&_cnxTx)!=0) {
+				midiSend(19);			
+				midiSend(peek(&_cnxTx));			
+			} else if (ch<128) {
+				midiSend((byte)ch);			
+			}
+		} else if (ch==139) { //Fctn+ESC
+			curPos(8,39);
+			print("cDisconnecting...Please wait                                     ");
+
+			modemReset(bufAddr,bufPage);	
+			curPos(8,39);
+			print("cDisconnected                                                    ");
+
+			return;		
+		}
+		ch = serialGet(bufAddr,bufPage);
+		if (ch!=-1) {
+			inChar((byte)ch);
+			if (autoRepL>0) {
+				serialPut(&autoRep,autoRepL);
+				autoRepL=0;
+
+			}
+		}
+		serialRx(bufAddr,bufPage);
+	}
+}
+
+void termStart() {
+	int ch;
+	if (!modemPresent) return;
+	bufClear(bufAddr,bufPage);
+
+	curPos(8,39);
+	print("cTerminal mode                                                ");
+
+	videotexEnabled=true;
+
+	modeRouleau=true;
+	inChar(0x0c);	
+	inChar(0x0c);	
+	inChar(0x0c);	
+	inChar(0x11);	
+
+	t=" AAll characters are sent to the modem.  You can enter commands supported by     Zimodem (AT+CONFIG, ATZ, ATI, etc...)    G";
+	poke(&t,0x1b);
+	poke(&t+39,0x0a);
+	poke(&t+40,0x0d);
+	poke(&t+118,0x0d);
+	poke(&t+119,0x0a);
+	poke(&t+120,0x0a);
+	poke(&t+121,0x1b);
+	
+	displayString(&t,0);
+
+	videotexEnabled=false;
+
+	while(true) {
+		ch = getKey(false);
+		if (ch>0 && ch!=139) {
+			midiSend((byte)ch);			
+		} else if (ch==139) { //Fctn+ESC
+			curPos(8,39);
+			print("c                                                    ");
+			inChar(0x14);
+			modeRouleau=false;
+			return;		
+		}
+		ch = serialGet(bufAddr,bufPage);
+		if (ch!=-1) {
+			inChar((byte)ch);
+			if (autoRepL>0) {
+				serialPut(&autoRep,autoRepL);
+				autoRepL=0;
+
+			}
+		}
+		serialRx(bufAddr,bufPage);
+	}
+}
+
+
+
 
 ////////////////////////////////////////
 ////// MAIN FUNCTION
@@ -2291,12 +2801,27 @@ void main() {
 	
 	
 	// Starting
+
+	print("**************** EMinEx V1.0 ****************Checking for 'Zimodem' modem...");
+	serialInit(bufAddr,bufPage,4105,1000,100);
+	modemPresent=modemDetect(bufAddr,bufPage);
+	if (modemPresent)
+		print("9FOUND");
+
+
+
+
+	else
+		print("dNOT INSTALLED");
+
+	bufClear(bufAddr,bufPage);
+
+	sleep(2000);
 	bool stop=false;
 	
 	import("/system/reginit.dat",0x1100,0);
 	poke(gfxModes,0);
 	cls();
-	clearSprites();
 	clearTiles();
 	clearTileSet();
 	clearBitMap();	
@@ -2339,7 +2864,7 @@ void main() {
 	txt1[1]="2E M i n E x";
 	txt1[2]="";
 	txt1[3]="";
-	txt1[4]="V 0.1";
+	txt1[4]="V 1.0";
 	txt1[5]="";
 	txt1[6]="";
 	txt1[7]="bVideotex CEPT-2 Emulator";
@@ -2360,10 +2885,16 @@ void main() {
 	
 		while (true) {
 			if (mainDisplayed==1 || (mainDisplayed==0 && getKeyDwn()==12)) {
-				txt1[0]="fConnect";
+				if (!modemPresent)
+					txt1[0]="fConnect";
+				else
+					txt1[0]="Connect";
 				txt1[1]="View local files";
 				txt1[2]="Local mode";
-				txt1[3]="fTerminal mode";
+				if (!modemPresent)
+					txt1[3]="fTerminal mode";
+				else 
+					txt1[3]="Terminal mode";
 				txt1[4]="Color/bw toggle";
 				txt1[5]="Infos";
 				txt1[6]="Exit";	
@@ -2383,14 +2914,44 @@ void main() {
 				boxClose();
 				break;
 			}
-			if (idxSelected==0 || idxSelected==3) { // Connect or terminal
+			if (idxSelected==0) { // Connect
+				if (!modemPresent) {
+					txt2[0]="";
+					txt2[1]="bNot available";
+					txt2[2]="";
+					txt2[3]="bModem not detected!";
+					boxAlert(1,29,15,22,9,"Not available",txt2,4);
+					continue;
+				}
+				boxCloseAll();
+				cnxStart();
+				mainDisplayed=1;
+				continue;			
+			}
+			if (idxSelected==3) { // Terminal
+				if (!modemPresent) {
+					txt2[0]="";
+					txt2[1]="bNot available";
+					txt2[2]="";
+					txt2[3]="bModem not detected!";
+					boxAlert(1,29,15,22,9,"Not available",txt2,4);
+					continue;
+				}
 				txt2[0]="";
-				txt2[1]="bSorry!";
-				txt2[2]="";
-				txt2[3]="bNot yet available!";
-				boxAlert(1,29,15,22,9,"Not available",txt2,4);
+				txt2[1]="bCtrl+letter keys: ASCII 1 to 26";
+				txt2[2]="bCtrl+[0-4]: ASCII 27 to 31";
+				txt2[3]="";
+				txt2[4]="All chars are sent to the modem";
+				txt2[5]="You can type 'AT' commands as";
+				txt2[6]="AT+CONIG, ATZ, ATI, etc...";
+				txt2[7]="";
+				txt2[8]="Videotex is not emulated";
+				txt2[9]="";
+				txt2[10]="bFctn+ESC: exit terminal mode";
+				boxAlert(8,20,10,40,15,"Terminal mode",txt2,11);
 				continue;
 			}
+
 			if (idxSelected==4) { // Display mode
 				colorMode=1-colorMode;
 				setColorMode(colorMode);
@@ -2431,9 +2992,9 @@ void main() {
 				txt2[7]="bIt reached its peak in 1990, with several million users.";
 				txt2[8]="and more than 25.000 services.";
 				txt2[9]="";
-				txt2[10]="bOnce Micro-8 has the ability to connect to the Internet,";
+				txt2[10]="bIf your Micro-8 has the ability to connect to the Internet,";
 				txt2[11]="2EMinExb will provide access to Videotex services";
-				txt2[12]="bthat are still operating today, notably MiniPavi (www.minipavi.fr).";
+				txt2[12]="bthat are still operating today via MiniPavi (www.minipavi.fr).";
 				txt2[13]="";
 				txt2[14]="2EMinExb is also available for MSX computers.";
 				boxAlert(6,5,8,70,21,"Info",txt2,15);
@@ -2502,13 +3063,22 @@ void main() {
 			mainDisplayed=1;
 			continue;
 		}
+		if (boxId==8) { // From terminal mode info
+			if (menuRet==0) {
+				// Closed : nothing to do: box is closed automatically
+				continue;
+			}				
+			boxCloseAll();
+			termStart();
+			mainDisplayed=1;
+			continue;
+		}
 
 	}
 
 
 	// Exiting
 
-	clearSprites();
 	clearTiles();
 	clearTileSet();
 	clearBitMap();	

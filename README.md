@@ -19,13 +19,13 @@ EMinEx allows you to display pages in the **CEPT-2 Videotex** format, a standard
 
 The Minitel was a true precursor to the consumer Internet, offering a wide range of online services as early as the 1980s. It reached its peak in 1990, with several million users.
 
-Once the Micro-8 has the ability to connect to the Internet, EMinEx will make it possible to access Videotex services that are still running today, including **MiniPavi** (www.minipavi.fr).
+If your Micro-8 has the ability to connect to the Internet [(See here)](serial.md), EMinEx will make it possible to access Videotex services that are still running today, including **MiniPavi** (www.minipavi.fr).
 
 And who knows... why not a service dedicated to the Micro-8 one day?!
 
 ### In the meantime...
 
-EMinEx for Micro-8 already allows you to display pages in the Videotex format.
+Even if your Micro-8 cannot be connected to the net, EMinEx for Micro-8 allows you to display pages in the Videotex format.
 
 The Videotex format can display **25 lines of 40 characters, in 8 colors**!
 
@@ -39,7 +39,7 @@ Enjoy those **big pixels and beautiful 8-color graphics**!
 
 EMinEx also includes a small "library" for displaying different types of windows: alerts, confirmations, item selection, etc.
 
-This part of the code, located between lines **10 and 680**, can easily be extracted and reused in your own projects.
+This part of the code, located between lines **17 and 683**, can easily be extracted and reused in your own projects.
 
 The code is commented (I've done my best!), and you can see this library in action in EMinEx starting at **line 2284**.
 
@@ -70,13 +70,13 @@ EMinEx permet de visualiser des pages au format **Vidéotex CEPT-2**, un standar
 
 Le Minitel fut un véritable précurseur de l’Internet grand public, en proposant dès les années 1980 un large éventail de services en ligne. Il connut son apogée en 1990, avec plusieurs millions d’utilisateurs.
 
-Lorsque le Micro-8 aura la possibilité de se connecter à Internet, EMinEx permettra d’accéder aux services Vidéotex encore en fonctionnement aujourd’hui, notamment **MiniPavi** (www.minipavi.fr).
+Si le Micro-8 utilisé a la possibilité de se connecter à Internet [(Voir ici)](serial.md), EMinEx permet d’accéder aux services Vidéotex encore en fonctionnement aujourd’hui, notamment **MiniPavi** (www.minipavi.fr).
 
 Et pourquoi pas, un jour, un service dédié au Micro-8 ?!
 
 ### En attendant...
 
-EMinEx pour Micro-8 vous permet déjà de visualiser des pages au format Vidéotex.
+Même si le Micro-8 utilisé n'a pas accès au net, EMinEx pour Micro-8 vous permet déjà de visualiser des pages au format Vidéotex.
 
 Le format Vidéotex permet d’afficher **25 lignes de 40 caractères, en 8 couleurs** !
 
@@ -90,7 +90,7 @@ Quelques dizaines de pages sont fournies avec le logiciel.
 
 EMinEx fait également appel à une petite « librairie » permettant d’afficher différents types de fenêtres : alertes, confirmations, sélection d’éléments, etc.
 
-Cette partie du code, située entre les lignes **10 et 680**, peut facilement être extraite et réutilisée dans vos propres réalisations.
+Cette partie du code, située entre les lignes **17 et 683**, peut facilement être extraite et réutilisée dans vos propres réalisations.
 
 Le code est commenté (j’ai fait ce que j’ai pu !), et vous pouvez voir cette librairie en action dans EMinEx à partir de la **ligne 2284**.
 

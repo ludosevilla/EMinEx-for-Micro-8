@@ -4,6 +4,8 @@
 
 A simple way to connect the Micro-8 to the Internet is to use an **ESP32 running the Zimodem firmware**, connected to the Micro-8's **MIDI-IN and MIDI-OUT** ports.
 
+![Schema](IMG/schema.png)
+
 ## 1. The MIDI interface
 
 The first step is to build or obtain the interface that connects the Micro-8's MIDI ports to the ESP32.
@@ -26,6 +28,14 @@ As far as I know, this board is equivalent to the DIY circuit described in this 
 
 <https://electroniqueamateur.blogspot.com/2023/09/fabrication-dun-module-midi-in-et-out.html>
 
+*TO MICRO-8 MIDI OUT PORT*
+
+![Schema](IMG/midi_in.png)
+
+*TO MICRO-8 MIDI IN PORT*
+
+![Schema](IMG/midi_out.png)
+
 ## 2. The Zimodem firmware
 
 On the ESP32, I installed **Zimodem**, a firmware developed by **Bo Zimmerman**. It turns the ESP32 into a Wi-Fi modem controlled using **Hayes-style `AT` commands**.
@@ -42,7 +52,7 @@ My modified version of Zimodem is available here:
 
 The final setup looks like this:
 
-**[Photo]**
+![Final setup](IMG/montage.jpg)
 
 The connections are extremely simple and require only **four wires** between the MIDI-Serial interface and the ESP32.
 
@@ -57,6 +67,8 @@ The program also provides a **"Terminal"** mode, which allows commands to be sen
 # Connecter le Micro-8 à Internet avec un ESP32
 
 Une solution simple pour connecter le Micro-8 à Internet consiste à utiliser un **ESP32 équipé du firmware Zimodem**, connecté aux ports **MIDI-IN et MIDI-OUT** du Micro-8.
+
+![Schema](IMG/schema.png)
 
 ## 1. L'interface MIDI
 
@@ -80,6 +92,14 @@ Cette carte est, à ma connaissance, équivalente au montage que l'on peut réal
 
 <https://electroniqueamateur.blogspot.com/2023/09/fabrication-dun-module-midi-in-et-out.html>
 
+*VERS MIDI OUT DU MICRO-8*
+
+![Schema](IMG/midi_in.png)
+
+*VERS MIDI IN DU MICRO-8*
+
+![Schema](IMG/midi_out.png)
+
 ## 2. Le firmware Zimodem
 
 Côté ESP32, j'ai installé **Zimodem**, le firmware développé par **Bo Zimmerman**. Il permet de transformer l'ESP32 en modem Wi-Fi et se pilote à l'aide de **commandes Hayes de type `AT`**.
@@ -96,7 +116,7 @@ Ma version modifiée de Zimodem est disponible ici :
 
 Au final, on obtient quelque chose de très simple :
 
-**[Photo]**
+![Montage](IMG/montage.jpg)
 
 Les connexions sont extrêmement simples et se résument à **quatre fils** entre l'interface MIDI-Serial et l'ESP32.
 

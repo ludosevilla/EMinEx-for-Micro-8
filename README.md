@@ -106,15 +106,15 @@ Si votre Micro-8 peut se connecter à Internet et accéder à la passerelle Mini
 
 | **MICRO-8** | **Minitel** |
 |---------|------------|
-| **Enter** | Envoi (Send) |
-| **Down arrow** | Suite (Next) |
-| **Up arrow** | Retour (Previous)|
-| **Left arrow** | Sommaire (Index) |
-| **Right arrow** | Guide |
-| **Backspace** | Correction (Del)|
-| **FCTN + Backspace** | Annulation (Cancel)|
-| **FCTN + R** | Répétition (Repeat) |
-| **FCTN + Left arrown** | Connexion/Fin (Connection/End)|
+| **Enter** | Envoi |
+| **Flèche bas** | Suite |
+| **Flèche haut** | Retour |
+| **Flèche gauche** | Sommaire |
+| **Flèche droite** | Guide |
+| **Suppr** | Correction |
+| **FCTN + Suppr** | Annulation |
+| **FCTN + R** | Répétition |
+| **FCTN + Flèche gauche** | Connexion/Fin |
 
 
 À vous les **gros pixels et les 8 belles couleurs** !
